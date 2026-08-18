@@ -17,6 +17,10 @@ export class AuthService {
     });
 
     if (user && (await bcrypt.compare(pass, user.password))) {
+      // Pastikan akun berstatus ACTIVE
+      if (user.status !== 'ACTIVE') {
+        return null;
+      }
       const { password, ...result } = user;
       return result;
     }
@@ -25,13 +29,15 @@ export class AuthService {
 
   // 2. Generate Tokens (Access & Refresh)
   async login(user: any) {
+    // JWT Payload sekarang membawa tenantId (Krusial untuk SaaS Multi-Tenant)
     const payload = { 
       email: user.email, 
       sub: user.id, 
-      role: user.role // PERBAIKAN: role adalah string, bukan object
+      role: user.role,
+      tenantId: user.tenantId // Inject tenantId ke dalam token
     };
 
-    // Access token untuk dikirim ke memory frontend
+    // Access token (umur default biasanya 15m - 1h diatur di auth.module)
     const accessToken = this.jwtService.sign(payload);
     
     // Refresh token untuk disimpan di HTTP-Only Cookie (umur 7 hari)
@@ -44,9 +50,11 @@ export class AuthService {
       user: {
         id: user.id,
         email: user.email,
-        role: user.role, // PERBAIKAN: disesuaikan menjadi string
+        name: user.name,
+        role: user.role,
+        tenantId: user.tenantId, // Kirim ke frontend agar web dashboard tahu context bisnisnya
       },
-      access_token: accessToken, // PERBAIKAN: disamakan dengan tarikan Next.js
+      access_token: accessToken,
       refreshToken,
     };
   }

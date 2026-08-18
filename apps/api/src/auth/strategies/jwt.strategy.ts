@@ -13,6 +13,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
-    return { id: payload.sub, email: payload.email, role: payload.role };
+    // PERBAIKAN: Menambahkan tenantId agar bisa diakses di seluruh request controller
+    return { 
+      id: payload.sub, 
+      email: payload.email, 
+      role: payload.role,
+      tenantId: payload.tenantId 
+    };
   }
 }

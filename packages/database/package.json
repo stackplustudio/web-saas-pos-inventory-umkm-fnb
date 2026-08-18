@@ -6,7 +6,7 @@
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
-    "db:seed": "ts-node prisma/seed.ts"
+    "db:seed": "npx tsx prisma/seed.ts"
   },
   "dependencies": {
     "@prisma/client": "5",

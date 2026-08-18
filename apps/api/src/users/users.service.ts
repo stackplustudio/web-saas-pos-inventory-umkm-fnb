@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto'; // 🔥 TAMBAHKAN BARIS INI
 import * as bcrypt from 'bcryptjs';
+import { Role } from '@prisma/client';
 
 @Injectable()
 export class UsersService {
@@ -26,7 +27,7 @@ export class UsersService {
         email: createUserDto.email,
         name: createUserDto.name,
         password: hashedPassword,
-        role: createUserDto.role || 'USER',
+        role: (createUserDto.role as Role) || Role.KASIR,
       },
       select: {
         id: true,

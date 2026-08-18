@@ -8,12 +8,249 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+// ================= ENUMS =================
+enum Role {
+  SUPER_ADMIN
+  OWNER
+  MANAGER
+  KASIR
+  DAPUR
+}
+
+enum OrderType {
+  DINE_IN
+  TAKEAWAY
+  DELIVERY
+}
+
+enum OrderStatus {
+  NEW
+  PROCESSING
+  READY
+  COMPLETED
+  CANCELLED
+}
+
+enum MovementType {
+  IN
+  OUT
+  OPNAME
+  SALE
+}
+
+// ================= CORE ENTITIES =================
+
+model Tenant {
+  id               String   @id @default(cuid())
+  nama_bisnis      String
+  alamat           String?
+  status_langganan String   @default("ACTIVE") // ACTIVE, SUSPENDED, TRIAL
+  paket_id         String?
+  
+  users            User[]
+  categories       Category[]
+  menuItems        MenuItem[]
+  ingredients      Ingredient[]
+  suppliers        Supplier[]
+  tables           Table[]
+  orders           Order[]
+  shifts           Shift[]
+  stockMovements   StockMovement[]
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
-  password  String   
+  password  String
   name      String?
-  role      String   @default("ADMIN")
+  no_hp     String?
+  role      Role     @default(KASIR)
+  pin_kasir String?
+  status    String   @default("ACTIVE") 
+
+  tenantId  String?
+  tenant    Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  orders    Order[]  
+  shifts    Shift[]  
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// ================= INVENTORY & MENU (BOM) =================
+
+model Category {
+  id            String     @id @default(cuid())
+  nama_kategori String
+  
+  tenantId      String
+  tenant        Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  menuItems     MenuItem[]
+
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+}
+
+model MenuItem {
+  id          String      @id @default(cuid())
+  nama        String
+  harga_jual  Int
+  foto        String?
+  status      Boolean     @default(true) // true = tersedia, false = 86'd
+  
+  tenantId    String
+  tenant      Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  categoryId  String
+  category    Category    @relation(fields: [categoryId], references: [id])
+
+  recipes     Recipe[]
+  orderItems  OrderItem[]
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Ingredient {
+  id                   String   @id @default(cuid())
+  nama                 String
+  satuan               String   // gr, ml, pcs
+  stok_saat_ini        Float    @default(0)
+  stok_minimum         Float    @default(0)
+  harga_beli_terakhir  Int      @default(0)
+
+  tenantId             String
+  tenant               Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  recipes              Recipe[]
+  stockMovements       StockMovement[]
+
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
+
+model Recipe {
+  id             String     @id @default(cuid())
+  jumlah_takaran Float
+  
+  menuItemId     String
+  menuItem       MenuItem   @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  
+  ingredientId   String
+  ingredient     Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  @@unique([menuItemId, ingredientId])
+}
+
+model Supplier {
+  id          String   @id @default(cuid())
+  nama        String
+  kontak      String?
+  
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model StockMovement {
+  id            String       @id @default(cuid())
+  tipe          MovementType
+  jumlah        Float
+  referensi_id  String?      // ID transaksi pesanan atau ID opname
+  catatan       String?
+  
+  tenantId      String
+  tenant        Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  ingredientId  String
+  ingredient    Ingredient   @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+
+  tanggal       DateTime     @default(now())
+}
+
+// ================= POS, ORDERS & SHIFT =================
+
+model Table {
+  id          String   @id @default(cuid())
+  nomor_meja  String
+  area        String?
+  status      String   @default("KOSONG") // KOSONG, TERISI
+  
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  orders      Order[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Shift {
+  id          String    @id @default(cuid())
+  waktu_buka  DateTime  @default(now())
+  waktu_tutup DateTime?
+  modal_awal  Int       @default(0)
+  kas_sistem  Int       @default(0)
+  kas_fisik   Int?
+  selisih     Int?
+  catatan     String?
+  
+  tenantId    String
+  tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  kasirId     String
+  kasir       User      @relation(fields: [kasirId], references: [id])
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Order {
+  id          String      @id @default(cuid())
+  tipe        OrderType   @default(DINE_IN)
+  status      OrderStatus @default(NEW)
+  subtotal    Int         @default(0)
+  pajak       Int         @default(0)
+  total       Int         @default(0)
+  metode_bayar String?    // TUNAI, QRIS
+  
+  tenantId    String
+  tenant      Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  tableId     String?
+  table       Table?      @relation(fields: [tableId], references: [id])
+  
+  kasirId     String
+  kasir       User        @relation(fields: [kasirId], references: [id])
+
+  orderItems  OrderItem[]
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model OrderItem {
+  id          String   @id @default(cuid())
+  qty         Int
+  harga       Int
+  catatan     String?
+  
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  menuItemId  String
+  menuItem    MenuItem @relation(fields: [menuItemId], references: [id])
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
