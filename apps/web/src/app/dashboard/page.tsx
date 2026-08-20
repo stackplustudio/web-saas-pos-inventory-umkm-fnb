@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { TrendingUp, ReceiptText, Wallet, ArrowRight, Store, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { api } from "@/lib/axios";
+import router from "next/router";
 
 export default function DashboardPage() {
   const [userData, setUserData] = useState<any>(null);
@@ -14,6 +15,13 @@ export default function DashboardPage() {
     const userStr = localStorage.getItem("user");
     if (userStr) {
       const user = JSON.parse(userStr);
+
+      // 🔥 TAMBAHKAN INI: Jika Super Admin nyasar ke sini, tendang ke Control Center
+      if (user.role === "SUPER_ADMIN") {
+        router.push("/dashboard/superadmin");
+        return;
+      }
+      
       setUserData(user);
       
       // 🔥 PERBAIKAN: Hanya panggil API analytics jika bukan KASIR

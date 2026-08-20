@@ -5,7 +5,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { 
   LayoutDashboard, List, Coffee, Package, Users, LogOut, ReceiptText, MonitorPlay, LayoutGrid, Settings, Truck, Tag,
-  ShoppingBag, TrendingUp
+  ShoppingBag, TrendingUp,
+  ShieldAlert
 } from "lucide-react";
 import Cookies from "js-cookie";
 
@@ -38,30 +39,36 @@ export default function Sidebar() {
     {
       title: "UTAMA",
       items: [
-        { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, roles: ["SUPER_ADMIN", "OWNER", "MANAGER", "KASIR"] },
-        { name: "Transaksi", href: "/dashboard/orders", icon: ReceiptText, roles: ["SUPER_ADMIN", "OWNER", "MANAGER"] },
-        { name: "Laporan Keuangan", href: "/dashboard/reports", icon: TrendingUp, roles: ["SUPER_ADMIN", "OWNER", "MANAGER"] },
+        { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, roles: ["OWNER", "MANAGER", "KASIR"] },
+        { name: "Transaksi", href: "/dashboard/orders", icon: ReceiptText, roles: ["OWNER", "MANAGER"] },
+        { name: "Laporan Keuangan", href: "/dashboard/reports", icon: TrendingUp, roles: ["OWNER", "MANAGER"] },
       ]
     },
     {
       title: "KATALOG",
       items: [
-        { name: "Kategori", href: "/dashboard/categories", icon: List, roles: ["SUPER_ADMIN", "OWNER", "MANAGER", "KASIR"] },
-        { name: "Daftar Menu", href: "/dashboard/menus", icon: Coffee, roles: ["SUPER_ADMIN", "OWNER", "MANAGER", "KASIR"] },
+        { name: "Kategori", href: "/dashboard/categories", icon: List, roles: ["OWNER", "MANAGER", "KASIR"] },
+        { name: "Daftar Menu", href: "/dashboard/menus", icon: Coffee, roles: ["OWNER", "MANAGER", "KASIR"] },
       ]
     },
     {
       title: "OPERASIONAL",
       items: [
-        { name: "Manajemen Meja", href: "/dashboard/tables", icon: LayoutGrid, roles: ["SUPER_ADMIN", "OWNER", "MANAGER", "KASIR"] },
-        { name: "Supplier", href: "/dashboard/suppliers", icon: Truck, roles: ["SUPER_ADMIN", "OWNER", "MANAGER"] },
-        { name: "Inventory", href: "/dashboard/inventory", icon: Package, roles: ["SUPER_ADMIN", "OWNER", "MANAGER"] },
-        { name: "Promo & Diskon", href: "/dashboard/discounts", icon: Tag, roles: ["SUPER_ADMIN", "OWNER", "MANAGER"] },
-        { name: "Pegawai", href: "/dashboard/users", icon: Users, roles: ["SUPER_ADMIN", "OWNER", "MANAGER"] },
-        { name: "Pengaturan", href: "/dashboard/settings", icon: Settings, roles: ["SUPER_ADMIN", "OWNER"] },
-        { name: "Purchase Order", href: "/dashboard/purchase-orders", icon: ShoppingBag, roles: ["SUPER_ADMIN", "OWNER", "MANAGER"] },
+        { name: "Manajemen Meja", href: "/dashboard/tables", icon: LayoutGrid, roles: ["OWNER", "MANAGER", "KASIR"] },
+        { name: "Inventory", href: "/dashboard/inventory", icon: Package, roles: ["OWNER", "MANAGER"] },
+        { name: "Supplier", href: "/dashboard/suppliers", icon: Truck, roles: ["OWNER", "MANAGER"] },
+        { name: "Purchase Order", href: "/dashboard/purchase-orders", icon: ShoppingBag, roles: ["OWNER", "MANAGER"] },
+        { name: "Promo & Diskon", href: "/dashboard/discounts", icon: Tag, roles: ["OWNER", "MANAGER"] },
+        { name: "Pegawai", href: "/dashboard/users", icon: Users, roles: ["OWNER", "MANAGER"] },
+        { name: "Pengaturan", href: "/dashboard/settings", icon: Settings, roles: ["OWNER"] },
       ]
-    }
+    },
+    {
+      title: "SYSTEM ADMIN",
+      items: [
+        { name: "SaaS Control Center", href: "/dashboard/superadmin", icon: ShieldAlert, roles: ["SUPER_ADMIN"] },
+      ]
+    },
   ];
 
   return (
@@ -102,12 +109,14 @@ export default function Sidebar() {
           );
         })}
 
-        {/* Tombol pintasan ke POS */}
-        <Link href="/pos" className="flex items-center gap-3 px-4 py-3 mt-4 rounded-[12px] text-white bg-white/20 border border-white/30 hover:bg-white/30 transition-all duration-200">
-          <MonitorPlay size={20} />
-          <span className="text-[14px] font-bold">Buka Layar POS</span>
-        </Link>
-      </div>
+        {/* 🔥 PERBAIKAN DI SINI: Tombol ditaruh di dalam div list menu, dan hanya 1 blok ini saja */}
+        {userData?.role !== "SUPER_ADMIN" && (
+          <Link href="/pos" className="flex items-center gap-3 px-4 py-3 mt-4 rounded-[12px] text-white bg-white/20 border border-white/30 hover:bg-white/30 transition-all duration-200">
+            <MonitorPlay size={20} />
+            <span className="text-[14px] font-bold">Buka Layar POS</span>
+          </Link>
+        )}
+      </div> {/* <-- Ini adalah tag penutup div scrollbar */}
 
       {/* User Profile & Logout */}
       <div className="p-4 border-t border-white/20 bg-black/10">

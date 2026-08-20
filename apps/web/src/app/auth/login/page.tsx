@@ -1,42 +1,59 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "@/lib/axios";
 import { toast } from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import Cookies from "js-cookie"; // Pastikan install: pnpm add js-cookie
+import Cookies from "js-cookie"; 
+import { ShieldAlert } from "lucide-react"; // 🔥 Import ikon peringatan
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams(); // 🔥 Untuk membaca URL ?error=suspended
+  
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState(""); // 🔥 State khusus pesan suspend
+
+  // Tangkap error suspend dari URL
+  useEffect(() => {
+    if (searchParams.get("error") === "suspended") {
+      setErrorMsg("Akses ditolak. Akun bisnis Anda sedang dibekukan oleh Administrator Sistem. Silakan hubungi layanan pelanggan.");
+    }
+  }, [searchParams]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setErrorMsg(""); // Bersihkan error sebelumnya
 
     try {
       const res = await api.post("/auth/login", formData);
       
-      // Simpan token ke Cookies agar axios interceptor bisa langsung membacanya
-      Cookies.set("token", res.data.access_token, { expires: 1 }); // expires 1 hari
+      Cookies.set("token", res.data.access_token, { expires: 1 }); 
       localStorage.setItem("user", JSON.stringify(res.data.user));
 
       toast.success("Login berhasil!");
 
-      // Routing Otomatis Berdasarkan Role (Sesuai PRD)
+      // Routing Otomatis Berdasarkan Role
       const userRole = res.data.user.role;
       
-      if (userRole === "KASIR") {
-        router.push("/dashboard"); // Halaman khusus kasir nantinya
+      if (userRole === "SUPER_ADMIN") {
+        router.push("/dashboard/superadmin"); // 🔥 Arahkan Super Admin langsung ke Control Center
       } else {
-        router.push("/dashboard"); // Owner, Manager, Super Admin
+        router.push("/dashboard"); 
       }
 
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Email atau Password salah");
+      // 🔥 Cek apakah backend menolak karena toko dibekukan
+      if (error.response?.data?.message === 'SUSPENDED_TENANT') {
+        setErrorMsg("Akses ditolak. Akun bisnis Anda sedang dibekukan.");
+      } else {
+        // Error reguler seperti salah password pakai toast biasa
+        toast.error(error.response?.data?.message || "Email atau Password salah");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -77,6 +94,14 @@ export default function LoginPage() {
               <h2 className="text-2xl font-bold text-[#00232C] mb-2">Welcome Back</h2>
               <p className="text-[#00232C]/60 text-sm">Silakan masuk menggunakan kredensial Anda.</p>
             </div>
+
+            {/* 🔥 KOTAK PERINGATAN SUSPEND (Muncul jika errorMsg ada isinya) */}
+            {errorMsg && (
+              <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-600 rounded-[12px] text-sm font-semibold flex gap-3 items-start animate-in fade-in zoom-in duration-300">
+                <ShieldAlert size={20} className="shrink-0 mt-0.5" />
+                <p>{errorMsg}</p>
+              </div>
+            )}
 
             <form onSubmit={handleLogin} className="space-y-5">
               <div className="space-y-2">

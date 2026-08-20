@@ -15,6 +15,7 @@ import { SettingsModule } from './settings/settings.module';
 import { SuppliersModule } from './suppliers/suppliers.module';
 import { DiscountsModule } from './discounts/discounts.module';
 import { PurchaseOrdersModule } from './purchase-orders/purchase-orders.module';
+import { TenantsModule } from './tenants/tenants.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { PurchaseOrdersModule } from './purchase-orders/purchase-orders.module';
     SuppliersModule,
     DiscountsModule,
     PurchaseOrdersModule,
+    TenantsModule,
   ],
   controllers: [],
   providers: [],
