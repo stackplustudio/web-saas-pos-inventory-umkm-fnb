@@ -1,23 +1,31 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { 
-  LayoutDashboard, 
-  List, 
-  Coffee, 
-  Package, 
-  Users, 
-  Settings, 
-  LogOut,
-  ReceiptText
+  LayoutDashboard, List, Coffee, Package, Users, LogOut, ReceiptText, MonitorPlay, LayoutGrid, Settings, Truck, Tag,
+  ShoppingBag, TrendingUp
 } from "lucide-react";
 import Cookies from "js-cookie";
-import { useRouter } from "next/navigation";
+
+interface UserData {
+  name: string;
+  email: string;
+  role: string;
+}
 
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const [userData, setUserData] = useState<UserData | null>(null);
+
+  useEffect(() => {
+    const userStr = localStorage.getItem("user");
+    if (userStr) {
+      setUserData(JSON.parse(userStr));
+    }
+  }, []);
 
   const handleLogout = () => {
     Cookies.remove("token");
@@ -25,76 +33,97 @@ export default function Sidebar() {
     router.push("/auth/login");
   };
 
-  const navItems = [
-    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-    { name: "Kategori", href: "/dashboard/categories", icon: List },
-    { name: "Daftar Menu", href: "/dashboard/menus", icon: Coffee },
-    { name: "Transaksi", href: "/dashboard/orders", icon: ReceiptText },
-    { name: "Inventory", href: "/dashboard/inventory", icon: Package },
+  // Pengelompokan Menu (Grouping)
+  const menuGroups = [
+    {
+      title: "UTAMA",
+      items: [
+        { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, roles: ["SUPER_ADMIN", "OWNER", "MANAGER", "KASIR"] },
+        { name: "Transaksi", href: "/dashboard/orders", icon: ReceiptText, roles: ["SUPER_ADMIN", "OWNER", "MANAGER"] },
+        { name: "Laporan Keuangan", href: "/dashboard/reports", icon: TrendingUp, roles: ["SUPER_ADMIN", "OWNER", "MANAGER"] },
+      ]
+    },
+    {
+      title: "KATALOG",
+      items: [
+        { name: "Kategori", href: "/dashboard/categories", icon: List, roles: ["SUPER_ADMIN", "OWNER", "MANAGER", "KASIR"] },
+        { name: "Daftar Menu", href: "/dashboard/menus", icon: Coffee, roles: ["SUPER_ADMIN", "OWNER", "MANAGER", "KASIR"] },
+      ]
+    },
+    {
+      title: "OPERASIONAL",
+      items: [
+        { name: "Manajemen Meja", href: "/dashboard/tables", icon: LayoutGrid, roles: ["SUPER_ADMIN", "OWNER", "MANAGER", "KASIR"] },
+        { name: "Supplier", href: "/dashboard/suppliers", icon: Truck, roles: ["SUPER_ADMIN", "OWNER", "MANAGER"] },
+        { name: "Inventory", href: "/dashboard/inventory", icon: Package, roles: ["SUPER_ADMIN", "OWNER", "MANAGER"] },
+        { name: "Promo & Diskon", href: "/dashboard/discounts", icon: Tag, roles: ["SUPER_ADMIN", "OWNER", "MANAGER"] },
+        { name: "Pegawai", href: "/dashboard/users", icon: Users, roles: ["SUPER_ADMIN", "OWNER", "MANAGER"] },
+        { name: "Pengaturan", href: "/dashboard/settings", icon: Settings, roles: ["SUPER_ADMIN", "OWNER"] },
+        { name: "Purchase Order", href: "/dashboard/purchase-orders", icon: ShoppingBag, roles: ["SUPER_ADMIN", "OWNER", "MANAGER"] },
+      ]
+    }
   ];
 
   return (
-    <div className="w-[260px] h-screen bg-[#00232C] text-white flex flex-col font-inter flex-shrink-0">
-      {/* Branding */}
-      <div className="p-6 flex items-center gap-3 border-b border-white/10">
-        <div className="bg-[#0053FF] text-white font-black text-lg flex items-center justify-center w-10 h-10 rounded-[10px]">
-          NK
-        </div>
+    <div className="w-[260px] h-screen bg-[#0053FF] text-white flex flex-col font-inter flex-shrink-0 shadow-xl z-20">
+      
+      {/* Brand Logo */}
+      <div className="p-6 flex items-center gap-3 border-b border-white/20">
+        <div className="bg-white text-[#0053FF] font-black text-lg flex items-center justify-center w-10 h-10 rounded-[10px]">NK</div>
         <span className="text-xl font-bold tracking-wide">NusaKasir</span>
       </div>
 
-      {/* Menu Navigasi */}
-      <div className="flex-1 overflow-y-auto py-6 px-4 space-y-1">
-        <p className="px-4 text-[11px] font-bold text-white/40 uppercase tracking-wider mb-2">
-          Menu Utama
-        </p>
-        {navItems.map((item) => {
-          const isActive = pathname === item.href;
-          const Icon = item.icon;
+      {/* Menu List - SCROLLBAR DIHILANGKAN DI SINI */}
+      <div className="flex-1 overflow-y-auto py-6 px-4 space-y-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        {menuGroups.map((group, idx) => {
+          // Filter item berdasarkan role
+          const filteredItems = group.items.filter(item => item.roles.includes(userData?.role || ""));
+          if (filteredItems.length === 0) return null;
+
           return (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={`flex items-center gap-3 px-4 py-3 rounded-[12px] transition-all duration-200 ${
-                isActive 
-                  ? "bg-[#0053FF] text-white font-medium shadow-[0_4px_12px_rgba(0,83,255,0.25)]" 
-                  : "text-white/60 hover:text-white hover:bg-white/5"
-              }`}
-            >
-              <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
-              <span className="text-[14px]">{item.name}</span>
-            </Link>
+            <div key={idx} className="space-y-1">
+              <p className="px-4 text-[11px] font-bold text-white/50 uppercase tracking-wider mb-2">{group.title}</p>
+              {filteredItems.map((item) => {
+                const isActive = pathname === item.href;
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.name} href={item.href}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-[12px] transition-all duration-200 ${
+                      isActive ? "bg-white text-[#0053FF] font-bold shadow-md" : "text-white/80 hover:text-white hover:bg-white/10"
+                    }`}
+                  >
+                    <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
+                    <span className="text-[14px]">{item.name}</span>
+                  </Link>
+                );
+              })}
+            </div>
           );
         })}
 
-        <div className="mt-8 mb-2">
-          <p className="px-4 text-[11px] font-bold text-white/40 uppercase tracking-wider mb-2">
-            Pengaturan
-          </p>
-          <Link
-            href="/dashboard/settings"
-            className="flex items-center gap-3 px-4 py-3 rounded-[12px] text-white/60 hover:text-white hover:bg-white/5 transition-all duration-200"
-          >
-            <Settings size={20} />
-            <span className="text-[14px]">Sistem POS</span>
-          </Link>
-          <Link
-            href="/dashboard/users"
-            className="flex items-center gap-3 px-4 py-3 rounded-[12px] text-white/60 hover:text-white hover:bg-white/5 transition-all duration-200"
-          >
-            <Users size={20} />
-            <span className="text-[14px]">Pegawai</span>
-          </Link>
-        </div>
+        {/* Tombol pintasan ke POS */}
+        <Link href="/pos" className="flex items-center gap-3 px-4 py-3 mt-4 rounded-[12px] text-white bg-white/20 border border-white/30 hover:bg-white/30 transition-all duration-200">
+          <MonitorPlay size={20} />
+          <span className="text-[14px] font-bold">Buka Layar POS</span>
+        </Link>
       </div>
 
-      {/* Logout */}
-      <div className="p-4 border-t border-white/10">
-        <button 
-          onClick={handleLogout}
-          className="flex items-center w-full gap-3 px-4 py-3 rounded-[12px] text-white/60 hover:text-red-400 hover:bg-red-400/10 transition-all duration-200"
-        >
-          <LogOut size={20} />
+      {/* User Profile & Logout */}
+      <div className="p-4 border-t border-white/20 bg-black/10">
+        {userData && (
+          <div className="flex items-center gap-3 px-3 py-2 mb-3 bg-white/10 rounded-[12px]">
+            <div className="w-9 h-9 rounded-full bg-white text-[#0053FF] flex items-center justify-center font-black uppercase text-sm flex-shrink-0">
+              {userData.name.charAt(0)}
+            </div>
+            <div className="overflow-hidden">
+              <p className="text-sm font-bold truncate text-white leading-tight">{userData.name}</p>
+              <p className="text-[11px] font-medium text-white/60 truncate uppercase">{userData.role}</p>
+            </div>
+          </div>
+        )}
+        <button onClick={handleLogout} className="flex items-center justify-center w-full gap-2 px-4 py-2.5 rounded-[12px] text-white/80 hover:text-white hover:bg-red-500 transition-all duration-200">
+          <LogOut size={18} />
           <span className="text-[14px] font-medium">Log Out</span>
         </button>
       </div>

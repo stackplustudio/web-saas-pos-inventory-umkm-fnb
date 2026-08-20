@@ -56,6 +56,8 @@ model Tenant {
   orders           Order[]
   shifts           Shift[]
   stockMovements   StockMovement[]
+  discounts        Discount[]
+  purchaseOrders   PurchaseOrder[]
 
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
@@ -129,6 +131,7 @@ model Ingredient {
 
   recipes              Recipe[]
   stockMovements       StockMovement[]
+  purchaseOrderItems   PurchaseOrderItem[]
 
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
@@ -157,6 +160,8 @@ model Supplier {
   
   tenantId    String
   tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  purchaseOrders PurchaseOrder[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -224,6 +229,10 @@ model Order {
   total       Int         @default(0)
   metode_bayar String?    // TUNAI, QRIS
   
+  diskon      Int         @default(0)
+  discountId  String?
+  discount    Discount?   @relation(fields: [discountId], references: [id])
+
   tenantId    String
   tenant      Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   
@@ -253,4 +262,51 @@ model OrderItem {
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model Discount {
+  id          String   @id @default(cuid())
+  nama        String   // Contoh: "Promo Kemerdekaan", "Diskon Karyawan"
+  tipe        String   // "PERSENTASE" atau "NOMINAL"
+  nilai       Int      // 15 (untuk 15%) atau 20000 (untuk Rp 20.000)
+  status      Boolean  @default(true)
+  
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  orders      Order[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model PurchaseOrder {
+  id          String   @id @default(cuid())
+  nomor_po    String
+  status      String   @default("PENDING") // PENDING, SELESAI, BATAL
+  total       Int      @default(0)
+  catatan     String?
+  
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  supplierId  String
+  supplier    Supplier @relation(fields: [supplierId], references: [id])
+
+  items       PurchaseOrderItem[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model PurchaseOrderItem {
+  id              String   @id @default(cuid())
+  qty             Float
+  harga_satuan    Int
+  
+  purchaseOrderId String
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  
+  ingredientId    String
+  ingredient      Ingredient @relation(fields: [ingredientId], references: [id])
 }

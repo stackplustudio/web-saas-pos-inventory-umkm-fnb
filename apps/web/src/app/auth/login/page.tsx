@@ -30,7 +30,7 @@ export default function LoginPage() {
       const userRole = res.data.user.role;
       
       if (userRole === "KASIR") {
-        router.push("/pos"); // Halaman khusus kasir nantinya
+        router.push("/dashboard"); // Halaman khusus kasir nantinya
       } else {
         router.push("/dashboard"); // Owner, Manager, Super Admin
       }

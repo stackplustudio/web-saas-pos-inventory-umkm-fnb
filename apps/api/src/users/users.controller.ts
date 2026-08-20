@@ -1,38 +1,44 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Request } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { Role } from '@prisma/client';
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  @Roles(Role.OWNER, Role.MANAGER)
   @Post()
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
+  create(@Request() req: any, @Body() createUserDto: CreateUserDto) {
+    return this.usersService.create(req.user.tenantId, createUserDto);
   }
 
+  @Roles(Role.OWNER, Role.MANAGER)
   @Get()
-  findAll() {
-    return this.usersService.findAll();
+  findAll(@Request() req: any) {
+    return this.usersService.findAll(req.user.tenantId);
   }
 
-  // TAMBAHKAN INI: Mengambil 1 user
+  @Roles(Role.OWNER, Role.MANAGER)
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.usersService.findOne(id);
+  findOne(@Request() req: any, @Param('id') id: string) {
+    return this.usersService.findOne(req.user.tenantId, id);
   }
 
-  // TAMBAHKAN INI: Menyimpan update
+  @Roles(Role.OWNER, Role.MANAGER)
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.update(id, updateUserDto);
+  update(@Request() req: any, @Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+    return this.usersService.update(req.user.tenantId, id, updateUserDto);
   }
 
+  @Roles(Role.OWNER, Role.MANAGER)
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.usersService.remove(id);
+  remove(@Request() req: any, @Param('id') id: string) {
+    return this.usersService.remove(req.user.tenantId, id);
   }
 }
