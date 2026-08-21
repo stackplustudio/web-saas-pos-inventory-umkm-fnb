@@ -13,8 +13,8 @@ COPY . .
 # 5. Install semua dependencies
 RUN pnpm install
 
-# 6. Generate Prisma Client dengan menunjuk langsung ke lokasi skema
-RUN npx prisma generate --schema=packages/database/prisma/schema.prisma
+# 6. 🔥 PERBAIKAN: Kunci Prisma di versi 5 agar tidak error syntax
+RUN npx prisma@5 generate --schema=packages/database/prisma/schema.prisma
 
 # 7. Build HANYA module backend (api), abaikan frontend (web)
 RUN pnpm run build --filter api
