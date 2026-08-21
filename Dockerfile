@@ -1,29 +1,29 @@
-# 1. Gunakan sistem operasi Linux dengan Node.js versi 20 (Alpine)
-FROM node:20-alpine
+# 1. Gunakan OS Node 20 Full Version (Paling stabil, semua library C & OpenSSL sudah terinstall bawaan pabrik)
+FROM node:20
 
-# 2. 🔥 PERBAIKAN: Install OpenSSL yang diwajibkan oleh Prisma di sistem operasi Alpine
-RUN apk add --no-cache openssl
-
-# 3. Install pnpm secara global di dalam server
+# 2. Install pnpm
 RUN npm install -g pnpm
 
-# 4. Set direktori kerja
+# 3. Set direktori kerja
 WORKDIR /app
 
-# 5. Copy seluruh file proyek ke dalam server
+# 4. Copy semua file proyek
 COPY . .
 
-# 6. Install semua dependencies
-RUN pnpm install
+# 5. 🔥 PENGHANCUR CACHE: Hapus semua sisa-sisa Alpine di folder monorepo!
+RUN rm -rf node_modules apps/*/node_modules packages/*/node_modules
 
-# 7. Kunci Prisma di versi 5 dan jalankan generate
+# 6. Install ulang dari nol dengan paksa (--force) agar Prisma mengunduh engine Debian yang benar
+RUN pnpm install --force
+
+# 7. Generate Prisma (Kunci di versi 5)
 RUN npx prisma@5 generate --schema=packages/database/prisma/schema.prisma
 
-# 8. Build HANYA module backend (api), abaikan frontend (web)
+# 8. Build module backend (api)
 RUN pnpm run build --filter api
 
-# 9. Buka port komunikasi
+# 9. Buka port
 EXPOSE 3000
 
-# 10. Perintah untuk menyalakan server saat aplikasi dijalankan
+# 10. Perintah menyalakan server
 CMD ["pnpm", "--filter", "api", "run", "start:prod"]
