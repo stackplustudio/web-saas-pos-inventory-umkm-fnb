@@ -8,6 +8,8 @@ async function bootstrap() {
   app.enableCors(); 
   
   // Jalankan backend di port 3001
-  await app.listen(3001); 
+  // await app.listen(3001); 
+  const port = process.env.PORT || 3001;
+  await app.listen(port);
 }
 bootstrap();
