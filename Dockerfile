@@ -22,5 +22,7 @@ RUN pnpm run build --filter api
 # 8. Buka port komunikasi
 EXPOSE 3000
 
+# # 9. Perintah untuk menyalakan server saat aplikasi dijalankan
+# CMD ["pnpm", "run", "start:prod", "--filter", "api"]
 # 9. Perintah untuk menyalakan server saat aplikasi dijalankan
-CMD ["pnpm", "run", "start:prod", "--filter", "api"]
+CMD ["pnpm", "--filter", "api", "run", "start:prod"]
