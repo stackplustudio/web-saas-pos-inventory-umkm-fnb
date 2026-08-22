@@ -4,16 +4,15 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   
-  // 🔥 KITA DAFTARKAN SEMUA DOMAIN SECARA EKSPLISIT
   const allowedOrigins = [
     'http://localhost:3000',
     'https://web-saas-pos-inventory-umkm-fnb-web.vercel.app', 
-    'https://pos.stackplustudio.com' // Tambahkan custom domain baru Anda di sini!
+    'https://pos.stackplustudio.com'
   ];
 
   app.enableCors({
-    origin: (origin, callback) => {
-      // Jika request datang tanpa origin (misal dari postman/curl) atau dari origin yang diizinkan
+    // 🔥 PERBAIKAN: Tambahkan definisi tipe data untuk origin dan callback
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
