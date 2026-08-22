@@ -11,7 +11,6 @@ async function bootstrap() {
   ];
 
   app.enableCors({
-    // 🔥 PERBAIKAN: Tambahkan definisi tipe data untuk origin dan callback
     origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
@@ -23,7 +22,10 @@ async function bootstrap() {
     credentials: true,
   });
   
-  const port = process.env.PORT || 3001;
-  await app.listen(port);
+  // 🔥 PERBAIKAN: Default ke 3000 agar selaras dengan Dockerfile
+  const port = process.env.PORT || 3000;
+  
+  // 🔥 KUNCI UTAMA: Wajib pakai '0.0.0.0' agar terbuka untuk Back4App
+  await app.listen(port, '0.0.0.0'); 
 }
 bootstrap();
